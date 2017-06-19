@@ -1,0 +1,237 @@
+private void login_Click(object sender, EventArgs e)
+        {
+            userName = txtUser.Text;
+            passwording = txtPwd.Text;
+            userIdentity = "";
+
+            foreach (Control ctl in groupBox1.Controls)
+            {
+                RadioButton rad = (RadioButton)ctl;
+                if (rad.Checked) 
+                userIdentity = rad.Text;
+            }
+
+            try
+            {
+                //获取数据库连接
+                u_dbConnection = new SQLiteConnection("Data Source=user_Db.sqlite;Version=3;");
+                //打开数据库
+                u_dbConnection.Open();
+                //count(*)查询所有表的记录数
+                string sql = String.Format("select count(*) from upiscores where UserName='{0}' and PassWording='{1}' and  UserIdentity='{2}'", userName, passwording, userIdentity);
+                //创建指令
+                SQLiteCommand comm = new SQLiteCommand(sql, u_dbConnection);
+                long num = (long)comm.ExecuteScalar();
+                if (num > 0)
+                {
+                    switch (userIdentity)
+                    {
+                        case "管理员":
+                            this.Hide();
+                            Administrator Ad = new Administrator();
+                            Ad.ShowDialog();
+                            this.Close();
+                            break;
+
+                        case "学生":
+                            this.Hide();
+                            student stu = new student();
+                            stu.ShowDialog();
+                            this.Close();
+                            break;
+
+                        case "教师":
+                            this.Hide();
+                            teacher te = new teacher();
+                            te.ShowDialog();
+                            this.Close();
+                            break;
+
+                    }
+                }
+                else
+                {
+                    this.txtUser.Clear();
+                    this.txtPwd.Clear();
+                    MessageBox.Show("用户名，密码或身份错误");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            }
+            finally
+            {
+                u_dbConnection.Close();
+            }
+
+                
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ private void button1_Click(object sender, EventArgs e)
+        {
+            string User =this.textBoxUser.Text;
+            string Pwd = this.textBoxPwd.Text;
+           string userIdentity = "";
+            foreach (Control ctl in groupBox1.Controls)
+            {
+                RadioButton rad = (RadioButton)ctl;
+                if (rad.Checked) userIdentity = rad.Text;
+            }
+            //加一个账号密码不为空的识别机制：
+            if (string.IsNullOrEmpty(this.textBoxUser.Text))
+            {
+                this.textBoxUser.Clear();
+                this.textBoxPwd.Clear();
+                MessageBox.Show("账号不能为空");
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(this.textBoxPwd.Text))
+                {
+                    this.textBoxUser.Clear();
+                    this.textBoxPwd.Clear();
+                    MessageBox.Show("密码不能为空");
+                }
+                else
+                {
+
+                    //分界线
+                    u_dbConnection = new SQLiteConnection("Data Source=user_Db.sqlite;Version=3;");
+                    u_dbConnection.Open();
+                    //加一个保证不重用户名机制：
+                    string sqlsel = String.Format("select count(*) from upiscores where UserName='{0}'", User);
+                    SQLiteCommand comm = new SQLiteCommand(sqlsel, u_dbConnection);
+                    long num = (long)comm.ExecuteScalar();
+                    if (num > 0)
+                    {
+                        this.textBoxUser.Clear();
+                        this.textBoxPwd.Clear();
+                        MessageBox.Show("已存在的用户名");
+                    }
+                    else
+                    {
+                        string sql = "insert into upiscores(UserName,PassWording,UserIdentity)values" + "('" + User + "','" + Pwd + "','" + userIdentity + "')";
+                        SQLiteCommand insert_command = new SQLiteCommand(sql, u_dbConnection);
+                        insert_command.ExecuteNonQuery();
+                        MessageBox.Show("添加成功");
+                        this.Hide();
+                        Admin ad = new Admin();
+                        ad.ShowDialog();
+                        this.Close();
+                    }
+                }
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Data.SQLite;
+
+namespace VisStudengManager
+{
+     class upiData
+    {
+        static SQLiteConnection u_dbConnection;
+
+        public static void  upiDa()
+        {
+            if (File.Exists(@"user_Db.sqlite")) 
+            {
+            }
+            else
+            {
+                createNewDatabase();
+                connectToDatabase();
+                createTable();
+                fillTable();
+            }
+        }
+
+        public static void createNewDatabase()
+        {
+            SQLiteConnection.CreateFile("user_Db.sqlite");
+        }
+
+        public static void connectToDatabase()
+        {
+            u_dbConnection = new SQLiteConnection("Data Source=user_Db.sqlite;Version=3;");
+            u_dbConnection.Open();
+        }
+   
+        public static  void createTable()
+        {
+            string sql = "create table upiscores(UserName varchar(24) PRIMARY KEY, PassWording varchar(24),UserIdentity varchar(24))";
+            SQLiteCommand command = new SQLiteCommand(sql, u_dbConnection);
+            command.ExecuteNonQuery();
+        }
+
+        public static void fillTable()
+        {
+            string sql = "insert into upiscores(UserName,PassWording,UserIdentity)values(1,1,'管理员')";
+            SQLiteCommand command = new SQLiteCommand(sql, u_dbConnection);
+            command.ExecuteNonQuery();
+            sql = "insert into upiscores(UserName,PassWording,UserIdentity)values(2,2,'学生')";
+            command = new SQLiteCommand(sql, u_dbConnection);
+            command.ExecuteNonQuery();
+            sql = "insert into upiscores(UserName,PassWording,UserIdentity)values(3,3,'教师')";
+            command = new SQLiteCommand(sql, u_dbConnection);
+            command.ExecuteNonQuery();
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+conn.ConnectionString = "Data Source=user_Db.sqlite;Version=3;";
+            conn.Open();
+            string sql = "select * from upiscores";
+            DataSet ds = new DataSet();
+            SQLiteDataAdapter da = new SQLiteDataAdapter(sql, conn);
+            da.Fill(ds, "upiscores");
+            this.dataGridView1.DataSource = ds.Tables["upiscores"];
+            conn.Close();
